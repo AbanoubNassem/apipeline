@@ -22,8 +22,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -64,9 +64,18 @@ var DEFAULT_SERVICE_OPTIONS = {
     domain: 'default',
     prefix: 'default'
 };
-var HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE'];
+var HTTP_METHODS = [
+    'GET',
+    'HEAD',
+    'POST',
+    'PUT',
+    'DELETE',
+    'CONNECT',
+    'OPTIONS',
+    'TRACE'
+];
 exports.drivers = { sqliteDriver: sqlite_1.default };
-var APIpeline = (function () {
+var APIpeline = /** @class */ (function () {
     function APIpeline(options, services, driver) {
         this._APIServices = {};
         this._warnedAboutMissingDriver = false;
@@ -81,9 +90,9 @@ var APIpeline = (function () {
     }
     APIpeline.prototype.fetch = function (service, options, forcedHTTPMethod) {
         return __awaiter(this, void 0, void 0, function () {
-            var serviceDefinition, _a, fullPath, withoutQueryParams, middlewares, fetchOptions, fetchHeaders, shouldUseCache, expiration, requestId, expirationDelay, cachedData, parsedResponseData, res, _b, responseMiddleware, err_1;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var serviceDefinition, _a, fullPath, withoutQueryParams, middlewares, fetchOptions, fetchHeaders, shouldUseCache, expiration, requestId, expirationDelay, cachedData, parsedResponseData, res, parsedData, data, responseMiddleware, err_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         serviceDefinition = this._APIServices[service];
                         if (!serviceDefinition) {
@@ -95,12 +104,12 @@ var APIpeline = (function () {
                             this._warnedAboutMissingDriver = true;
                         }
                         _a = this._constructPath(serviceDefinition, options), fullPath = _a.fullPath, withoutQueryParams = _a.withoutQueryParams;
-                        _c.label = 1;
+                        _b.label = 1;
                     case 1:
-                        _c.trys.push([1, 11, , 12]);
+                        _b.trys.push([1, 9, , 10]);
                         return [4 /*yield*/, this._applyMiddlewares(serviceDefinition, { fullPath: fullPath, withoutQueryParams: withoutQueryParams }, options)];
                     case 2:
-                        middlewares = _c.sent();
+                        middlewares = _b.sent();
                         fetchOptions = _merge(middlewares, (options && options.fetchOptions) || {}, { method: forcedHTTPMethod || serviceDefinition.method }, { headers: (options && options.headers) || {} });
                         fetchHeaders = options && options.fetchHeaders;
                         shouldUseCache = this._shouldUseCache(serviceDefinition, options);
@@ -108,12 +117,14 @@ var APIpeline = (function () {
                         requestId = void 0;
                         if (shouldUseCache) {
                             requestId = this._buildRequestId(serviceDefinition, fullPath, fetchHeaders, fetchOptions, options);
-                            expirationDelay = (options && options.expiration) || serviceDefinition.expiration || this._APIOptions.cacheExpiration;
+                            expirationDelay = (options && options.expiration) ||
+                                serviceDefinition.expiration ||
+                                this._APIOptions.cacheExpiration;
                             expiration = Date.now() + expirationDelay;
                         }
                         return [4 /*yield*/, this._getCachedData(service, requestId, fullPath, shouldUseCache)];
                     case 3:
-                        cachedData = _c.sent();
+                        cachedData = _b.sent();
                         if (cachedData.success && cachedData.fresh) {
                             this._log("Using fresh cache for " + fullPath);
                             return [2 /*return*/, cachedData.data];
@@ -125,7 +136,7 @@ var APIpeline = (function () {
                         parsedResponseData = void 0;
                         return [4 /*yield*/, this._fetch(fullPath, fetchOptions)];
                     case 4:
-                        res = _c.sent();
+                        res = _b.sent();
                         // If the network request fails, return the cached data if it's valid, a throw an error
                         if (!res.success) {
                             if (cachedData.success && cachedData.data) {
@@ -136,39 +147,42 @@ var APIpeline = (function () {
                                 throw new Error("Cannot fetch data for " + service + " online, no cache either.");
                             }
                         }
+                        parsedData = __assign({}, parsedResponseData);
                         this._log('raw network response', res);
                         if (!fetchHeaders) return [3 /*break*/, 5];
-                        parsedResponseData = res.data.headers && res.data.headers.map ? res.data.headers.map : {};
-                        return [3 /*break*/, 10];
-                    case 5:
-                        if (!((options && options.rawData) || serviceDefinition.rawData)) return [3 /*break*/, 6];
-                        _b = res.data;
+                        parsedResponseData =
+                            res.data.headers && res.data.headers.map ? res.data.headers.map : {};
                         return [3 /*break*/, 8];
-                    case 6: return [4 /*yield*/, res.data.json()];
-                    case 7:
-                        _b = _c.sent();
-                        _c.label = 8;
-                    case 8:
-                        parsedResponseData = _b;
+                    case 5: return [4 /*yield*/, res.data.json()];
+                    case 6:
+                        data = _b.sent();
+                        if ((options && options.rawData) || serviceDefinition.rawData) {
+                            parsedData = __assign({}, res.data, { data: data });
+                        }
+                        else {
+                            parsedData = data;
+                        }
+                        parsedResponseData = parsedData;
+                        console.log(parsedResponseData);
                         responseMiddleware = (options && options.responseMiddleware) ||
                             serviceDefinition.responseMiddleware ||
                             this._APIOptions.responseMiddleware;
-                        if (!responseMiddleware) return [3 /*break*/, 10];
+                        if (!responseMiddleware) return [3 /*break*/, 8];
                         return [4 /*yield*/, responseMiddleware(parsedResponseData)];
-                    case 9:
-                        parsedResponseData = _c.sent();
-                        _c.label = 10;
-                    case 10:
+                    case 7:
+                        parsedResponseData = _b.sent();
+                        _b.label = 8;
+                    case 8:
                         // Cache if it hasn't been disabled and if the network request has been successful
                         if (res.data.ok && shouldUseCache) {
-                            this._cache(serviceDefinition, service, requestId, parsedResponseData, expiration);
+                            this._cache(serviceDefinition, service, requestId, parsedData, expiration);
                         }
                         this._log('parsed network response', parsedResponseData);
                         return [2 /*return*/, parsedResponseData];
-                    case 11:
-                        err_1 = _c.sent();
+                    case 9:
+                        err_1 = _b.sent();
                         throw new Error(err_1);
-                    case 12: return [2 /*return*/];
+                    case 10: return [2 /*return*/];
                 }
             });
         });
@@ -192,8 +206,8 @@ var APIpeline = (function () {
     };
     APIpeline.prototype.clearCache = function (service) {
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
             var keysToRemove, _a, _b, _i, serviceName, keysForService, err_3;
+            var _this = this;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -289,9 +303,12 @@ var APIpeline = (function () {
                 switch (_b.label) {
                     case 0:
                         _b.trys.push([0, 2, , 3]);
-                        _a = { success: true };
+                        _a = {
+                            success: true
+                        };
                         return [4 /*yield*/, this._APIOptions.fetchMethod(url, options)];
-                    case 1: return [2 /*return*/, (_a.data = _b.sent(), _a)];
+                    case 1: return [2 /*return*/, (_a.data = _b.sent(),
+                            _a)];
                     case 2:
                         err_4 = _b.sent();
                         console.warn(err_4);
@@ -318,9 +335,9 @@ var APIpeline = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        shouldCap = typeof serviceDefinition.capService !== 'undefined' ?
-                            serviceDefinition.capService :
-                            this._APIOptions.capServices;
+                        shouldCap = typeof serviceDefinition.capService !== 'undefined'
+                            ? serviceDefinition.capService
+                            : this._APIOptions.capServices;
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 7, , 8]);
@@ -430,7 +447,8 @@ var APIpeline = (function () {
         else if (options && typeof options.disableCache !== 'undefined') {
             return !options.disableCache;
         }
-        else if (serviceDefinition && typeof serviceDefinition.disableCache !== 'undefined') {
+        else if (serviceDefinition &&
+            typeof serviceDefinition.disableCache !== 'undefined') {
             return !serviceDefinition.disableCache;
         }
         else {
@@ -506,8 +524,8 @@ var APIpeline = (function () {
      */
     APIpeline.prototype._getAllKeysForService = function (service) {
         return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
             var keys, serviceDictionaryKey, dictionary, dictionaryKeys, err_8;
+            var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -567,12 +585,16 @@ var APIpeline = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        middlewares = (options && options.middlewares) || serviceDefinition.middlewares || this._APIOptions.middlewares;
+                        middlewares = (options && options.middlewares) ||
+                            serviceDefinition.middlewares ||
+                            this._APIOptions.middlewares;
                         if (!(middlewares && middlewares.length)) return [3 /*break*/, 5];
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        middlewares = middlewares.map(function (middleware) { return middleware(serviceDefinition, paths, options); });
+                        middlewares = middlewares.map(function (middleware) {
+                            return middleware(serviceDefinition, paths, options);
+                        });
                         return [4 /*yield*/, Promise.all(middlewares)];
                     case 2:
                         resolvedMiddlewares = _a.sent();
@@ -588,7 +610,7 @@ var APIpeline = (function () {
         });
     };
     APIpeline.prototype._buildRequestId = function (serviceDefinition, fullPath, fetchHeaders, mergedOptions, // fully merged options
-        fetchOptions // fetch options
+    fetchOptions // fetch options
     ) {
         var ignoreHeadersWhenCaching = this._APIOptions.ignoreHeadersWhenCaching ||
             serviceDefinition.ignoreHeadersWhenCaching ||
@@ -660,9 +682,10 @@ var APIpeline = (function () {
                 if (encodeParameters) {
                     queryParameters[i] = encodeURIComponent(queryParameters[i]);
                 }
-                parsedQueryParameters += insertedQueryParameters === 0 ?
-                    "?" + i + "=" + queryParameters[i] :
-                    "&" + i + "=" + queryParameters[i];
+                parsedQueryParameters +=
+                    insertedQueryParameters === 0
+                        ? "?" + i + "=" + queryParameters[i]
+                        : "&" + i + "=" + queryParameters[i];
                 insertedQueryParameters++;
             }
         }
@@ -692,11 +715,13 @@ var APIpeline = (function () {
     APIpeline.prototype._mergeServicesWithDefaultValues = function (services) {
         var _this = this;
         return _mapValues(services, function (service, serviceName) {
-            if (service.domain && typeof _this._APIOptions.domains[service.domain] === 'undefined') {
+            if (service.domain &&
+                typeof _this._APIOptions.domains[service.domain] === 'undefined') {
                 throw new Error("Domain key " + service.domain + " specified for service " + serviceName + " hasn't been declared. \n" +
                     'Please provide it in your APIpeline parameters or leave it blank to use the default one.');
             }
-            if (service.prefix && typeof _this._APIOptions.prefixes[service.prefix] === 'undefined') {
+            if (service.prefix &&
+                typeof _this._APIOptions.prefixes[service.prefix] === 'undefined') {
                 throw new Error("Prefix key " + service.domain + " specified for service " + serviceName + " hasn't been declared. \n" +
                     'Please provide it in your APIpeline parameters or leave it blank to use the default one.');
             }
@@ -714,7 +739,9 @@ var APIpeline = (function () {
     APIpeline.prototype._logNetwork = function (serviceDefinition, fullPath, fetchHeaders, options, forcedHTTPMethod) {
         if (this._APIOptions.printNetworkRequests) {
             console.log("%c Network request " + (fetchHeaders ? '(headers only)' : '') + " for " + fullPath + " " +
-                ("(" + (forcedHTTPMethod || (options && options.method) || serviceDefinition.method) + ")"), 'font-weight: bold; color: blue');
+                ("(" + (forcedHTTPMethod ||
+                    (options && options.method) ||
+                    serviceDefinition.method) + ")"), 'font-weight: bold; color: blue');
         }
     };
     /**

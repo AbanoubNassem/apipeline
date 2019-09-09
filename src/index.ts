@@ -180,7 +180,7 @@ export default class APIpeline {
         }
 
         parsedResponseData = parsedData;
-
+        console.log(parsedResponseData);
         const responseMiddleware =
           (options && options.responseMiddleware) ||
           serviceDefinition.responseMiddleware ||
