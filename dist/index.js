@@ -163,7 +163,6 @@ var APIpeline = /** @class */ (function () {
                             parsedData = data;
                         }
                         parsedResponseData = parsedData;
-                        console.log(parsedResponseData);
                         responseMiddleware = (options && options.responseMiddleware) ||
                             serviceDefinition.responseMiddleware ||
                             this._APIOptions.responseMiddleware;
